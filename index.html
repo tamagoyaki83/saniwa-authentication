@@ -235,40 +235,51 @@
     });
 
     // 下載功能
-    document.getElementById('downloadBtn').addEventListener('click', () => {
+  document.getElementById('downloadBtn').addEventListener('click', () => {
   try {
     const rawName = document.getElementById('name').value.trim();
     const fileName = `審神者許可證_${rawName || '未命名'}.png`;
 
-    // 1. 將畫布轉為 Base64 圖片網址
+    // 1. 同步生成 DataURL
     const dataUrl = canvas.toDataURL('image/png');
 
-    // 2. 顯示長按儲存區，並把圖片放進去（解救 FB / 噗浪 / LINE 內嵌瀏覽器）
+    // 2. 顯示長按備用圖（防呆必備）
     const exportImg = document.getElementById('exportImg');
     const saveTip = document.getElementById('saveTip');
-    exportImg.src = dataUrl;
-    saveTip.style.display = 'block';
+    if (exportImg && saveTip) {
+      exportImg.src = dataUrl;
+      saveTip.style.display = 'block';
+    }
 
-    // 順便平滑捲動到圖片位置，讓手機使用者一眼看到
-    saveTip.scrollIntoView({ behavior: 'smooth' });
+    // 3. 同步轉成 Blob 物件（不使用非同步 toBlob，避免被 Chrome 判定為非使用者直接行為）
+    const byteString = atob(dataUrl.split(',')[1]);
+    const mimeString = dataUrl.split(',')[0].split(':')[1].split(';')[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    const blob = new Blob([ab], { type: mimeString });
 
-    // 3. 嘗試一般的自動下載（電腦瀏覽器或一般 Safari/Chrome 會正常運作）
-    canvas.toBlob((blob) => {
-      if (blob) {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-      }
-    }, 'image/png');
+    // 4. 針對 Chrome 最佳化的觸發下載
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.style.display = 'none';
+    link.href = blobUrl;
+    link.setAttribute('download', fileName);
+
+    // 必須先加到 DOM，再觸發 click，最後移除
+    document.body.appendChild(link);
+    link.click();
+
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    }, 200);
 
   } catch (err) {
-    console.error(err);
-    alert('請更換外部瀏覽器嘗試！><');
+    console.error('下載失敗詳情：', err);
+    alert('下載觸發失敗，請長按下方產生的圖片進行儲存！');
   }
 });
   </script>
