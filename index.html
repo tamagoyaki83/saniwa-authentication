@@ -236,11 +236,41 @@
 
     // 下載功能
     document.getElementById('downloadBtn').addEventListener('click', () => {
-      const link = document.createElement('a');
-      link.download = `特務認証票<_${document.getElementById('name').value || '未命名'}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    });
+  try {
+    const rawName = document.getElementById('name').value.trim();
+    const fileName = `審神者許可證_${rawName || '未命名'}.png`;
+
+    // 1. 將畫布轉為 Base64 圖片網址
+    const dataUrl = canvas.toDataURL('image/png');
+
+    // 2. 顯示長按儲存區，並把圖片放進去（解救 FB / 噗浪 / LINE 內嵌瀏覽器）
+    const exportImg = document.getElementById('exportImg');
+    const saveTip = document.getElementById('saveTip');
+    exportImg.src = dataUrl;
+    saveTip.style.display = 'block';
+
+    // 順便平滑捲動到圖片位置，讓手機使用者一眼看到
+    saveTip.scrollIntoView({ behavior: 'smooth' });
+
+    // 3. 嘗試一般的自動下載（電腦瀏覽器或一般 Safari/Chrome 會正常運作）
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+    }, 'image/png');
+
+  } catch (err) {
+    console.error(err);
+    alert('產生失敗，請確認圖片是否正常載入');
+  }
+});
   </script>
 </body>
 </html>
