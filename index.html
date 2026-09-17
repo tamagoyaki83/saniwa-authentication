@@ -118,6 +118,18 @@
         <label>認可年份：</label>
         <input type="text" id="approveYear" value="">
       </div>
+      <div class="form-group">
+      <label>顏色 ：</label>
+      <select id="bgSelector">
+        <option value="template_default.png">預設</option>
+        <option value="template_red.png">紅</option>
+        <option value="template_yellow.png">黃</option>
+        <option value="template_green.png">綠</option>
+        <option value="template_blue.png">藍</option>
+        <option value="template_white.png">白</option>
+        <option value="template_black.png">黑</option>
+      </select>
+      </div>
       <button class="download-btn" id="downloadBtn">下載</button>
     </div>
 
@@ -133,7 +145,10 @@
 
     // 載入底圖
     const bgImg = new Image();
-    bgImg.src = 'template.png'; // 底圖檔案名稱
+    const bgSelector = document.getElementById('bgSelector');
+
+    // 初始載入選單預設的第一張底圖
+    bgImg.src = bgSelector.value;
 
     let userAvatar = null;
 
@@ -200,6 +215,9 @@
     // 監聽所有輸入框變動
     document.querySelectorAll('input[type="text"]').forEach(input => {
       input.addEventListener('input', renderCard);
+    });
+    bgSelector.addEventListener('change', (e) => {
+    bgImg.src = e.target.value;
     });
 
     // 處理大頭照上傳
